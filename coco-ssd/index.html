@@ -1,0 +1,78 @@
+<html>
+    <head>
+ <!-- Load TensorFlow.js. This is required to use coco-ssd model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+<!-- Load the coco-ssd model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"> </script>
+    </head>
+    
+<body>
+    <div style="text-align: center; padding: 10px;">
+        <canvas id="canvasInput" style="text-align: center; padding: 10px;"></canvas><br>
+        <canvas id="canvasOutput" style="text-align: center; padding: 10px;"></canvas>
+    </div>
+    <div id="fooBar" style="padding: 10px; text-align: center;"></div>
+    <div id="output" style="font-family:courier;font-size:24px;height=300px text-align: center;"></div>
+    <div style="text-align: center; padding: 10px;">
+        <input type="file" id="input_file"/>
+    </div>
+</body>
+<script>
+
+    var foo = document.getElementById("fooBar");
+    var height=1000;
+    var width=1000;
+    function add(canvas,type,bbox) { 
+      var element = document.createElement("button");
+      element.name = type; // And the name too?
+      element.style="height: 30px; width: 70px; text-align: center;";
+      element.innerHTML = type;
+      element.onclick = function() { // Note this is a function
+              canvas.width =bbox[2];
+              canvas.height=bbox[3];
+              height = bbox[3];
+              width = bbox[2];
+              ctxo.drawImage(img,bbox[0],bbox[1],bbox[2],bbox[3],0,0,bbox[2],bbox[3]);
+              outp.innerHTML = "<br/> bounding box:"+bbox;
+      };
+
+      //Append the element in page (in span).  
+      foo.appendChild(element);
+    }
+  let inputElement = document.getElementById('input_file');
+  let canvas = document.getElementById('canvasInput');
+  let canvasO = document.getElementById('canvasOutput');
+  let ctxo = canvasO.getContext('2d');
+  let ctx = canvas.getContext('2d');
+  let img = new Image();
+  const outp = document.getElementById('output');
+  inputElement.addEventListener('change',(e) =>{
+      let file = e.target.files;
+      if (file.length >0 ){
+          img.src = URL.createObjectURL(file[0]);
+          img.onload = function() {
+              canvas.width = img.width;
+              canvas.height=img.height;
+              ctx.drawImage(img,0,0,img.width,img.height);
+          }
+          cocoSsd.load().then(model => {
+        // detect objects in the image.
+          model.detect(img).then(predictions => {
+            foo.innerHTML = "";
+            ctxo.clearRect(0, 0, width, height);
+            console.log('Predictions: ', predictions);
+                for(var i = 0; i<predictions.length; i++){
+                    add(canvasO,predictions[i].class,predictions[i].bbox);
+                    //outp.innerHTML += "<br/>" + predictions[i].class + " bounding box:"+predictions[i].bbox ;
+                }
+        });
+      });
+          
+      }
+  })
+  
+  // Load the model.
+    
+  
+</script>
+</html>
